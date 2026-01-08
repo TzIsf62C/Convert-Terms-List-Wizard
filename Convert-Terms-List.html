@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML Biblical Terms List to CSV Converter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .step-indicator {
+            transition: all 0.3s ease;
+        }
+        .step-active {
+            background-color: #3b82f6;
+            color: white;
+        }
+        .step-completed {
+            background-color: #10b981;
+            color: white;
+        }
+        .step-inactive {
+            background-color: #e5e7eb;
+            color: #9ca3af;
+        }
+        .drag-over {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">HTML Biblical Terms List to CSV Converter</h1>
+            <p class="text-gray-600">Prepare your data for Scripture Forge securely in your browser</p>
+        </div>
+
+        <!-- Progress Stepper -->
+        <div class="mb-8">
+            <div class="flex justify-between items-center">
+                <div class="flex-1 flex items-center">
+                    <div id="step1-indicator" class="step-indicator step-active w-10 h-10 rounded-full flex items-center justify-center font-semibold">1</div>
+                    <div class="flex-1 h-1 bg-gray-300 mx-2" id="line1"></div>
+                </div>
+                <div class="flex-1 flex items-center">
+                    <div id="step2-indicator" class="step-indicator step-inactive w-10 h-10 rounded-full flex items-center justify-center font-semibold">2</div>
+                    <div class="flex-1 h-1 bg-gray-300 mx-2" id="line2"></div>
+                </div>
+                <div>
+                    <div id="step3-indicator" class="step-indicator step-inactive w-10 h-10 rounded-full flex items-center justify-center font-semibold">3</div>
+                </div>
+            </div>
+            <div class="flex justify-between mt-2">
+                <span class="text-sm font-medium text-gray-700">Upload & Validate</span>
+                <span class="text-sm font-medium text-gray-700">Select Source</span>
+                <span class="text-sm font-medium text-gray-700">Download CSV</span>
+            </div>
+        </div>
+
+        <!-- Phase 1: File Upload -->
+        <div id="phase1" class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-2xl font-semibold mb-4 text-gray-800">Step 1: Upload HTML File</h2>
+            <div id="dropzone" class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-blue-400 transition-colors">
+                <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                <p class="mt-2 text-sm text-gray-600">Drag and drop your HTML file here, or click to browse</p>
+                <p class="text-xs text-gray-500 mt-1">Accepts .html and .htm files only</p>
+                <input type="file" id="fileInput" accept=".html,.htm" class="hidden">
+            </div>
+            <div id="error-message" class="mt-4 hidden">
+                <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative" role="alert">
+                    <strong class="font-bold">Error: </strong>
+                    <span id="error-text"></span>
+                </div>
+            </div>
+            <div id="success-message" class="mt-4 hidden">
+                <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded relative" role="alert">
+                    <strong class="font-bold">Success! </strong>
+                    <span id="success-text"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Phase 2: Language Selection -->
+        <div id="phase2" class="bg-white rounded-lg shadow-md p-6 mb-6 hidden">
+            <h2 class="text-2xl font-semibold mb-4 text-gray-800">Step 2: Select Source Language</h2>
+            <p class="text-gray-600 mb-4">Multiple sets of parentheses detected. Please select which one to use as the Source:</p>
+            <div class="mb-4">
+                <label for="parenthesesSelect" class="block text-sm font-medium text-gray-700 mb-2">Select Parentheses Set:</label>
+                <select id="parenthesesSelect" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md border">
+                    <!-- Options will be populated dynamically -->
+                </select>
+            </div>
+            <div id="preview" class="mb-4 hidden">
+                <div class="bg-blue-50 border border-blue-200 rounded p-4">
+                    <p class="text-sm font-medium text-gray-700 mb-1">Preview (First Row):</p>
+                    <p id="preview-text" class="text-gray-800 font-mono"></p>
+                </div>
+            </div>
+            <button id="confirmBtn" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors">
+                Confirm & Process
+            </button>
+        </div>
+
+        <!-- Phase 3: Download CSV -->
+        <div id="phase3" class="bg-white rounded-lg shadow-md p-6 mb-6 hidden">
+            <h2 class="text-2xl font-semibold mb-4 text-gray-800">Step 3: Download CSV</h2>
+            <div class="bg-green-50 border border-green-200 rounded p-4 mb-4">
+                <p class="text-gray-700 mb-2">✓ Data processed successfully!</p>
+                <p class="text-sm text-gray-600" id="row-count"></p>
+            </div>
+            <button id="downloadBtn" class="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors">
+                Download CSV
+            </button>
+            <button id="resetBtn" class="w-full mt-3 bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-6 rounded-lg transition-colors">
+                Process Another File
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let currentFile = null;
+        let parsedTable = null;
+        let parenthesesCount = 0;
+        let selectedParenthesesIndex = 0;
+        let csvData = null;
+        let originalFilename = '';
+
+        // DOM Elements
+        const dropzone = document.getElementById('dropzone');
+        const fileInput = document.getElementById('fileInput');
+        const errorMessage = document.getElementById('error-message');
+        const errorText = document.getElementById('error-text');
+        const successMessage = document.getElementById('success-message');
+        const successText = document.getElementById('success-text');
+        const phase1 = document.getElementById('phase1');
+        const phase2 = document.getElementById('phase2');
+        const phase3 = document.getElementById('phase3');
+        const parenthesesSelect = document.getElementById('parenthesesSelect');
+        const preview = document.getElementById('preview');
+        const previewText = document.getElementById('preview-text');
+        const confirmBtn = document.getElementById('confirmBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const rowCount = document.getElementById('row-count');
+
+        // Step indicators
+        const step1Indicator = document.getElementById('step1-indicator');
+        const step2Indicator = document.getElementById('step2-indicator');
+        const step3Indicator = document.getElementById('step3-indicator');
+        const line1 = document.getElementById('line1');
+        const line2 = document.getElementById('line2');
+
+        // Event Listeners
+        dropzone.addEventListener('click', () => fileInput.click());
+        dropzone.addEventListener('dragover', handleDragOver);
+        dropzone.addEventListener('dragleave', handleDragLeave);
+        dropzone.addEventListener('drop', handleDrop);
+        fileInput.addEventListener('change', handleFileSelect);
+        parenthesesSelect.addEventListener('change', updatePreview);
+        confirmBtn.addEventListener('click', processData);
+        downloadBtn.addEventListener('click', downloadCSV);
+        resetBtn.addEventListener('click', resetApp);
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            dropzone.classList.add('drag-over');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            dropzone.classList.remove('drag-over');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            dropzone.classList.remove('drag-over');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        }
+
+        function handleFileSelect(e) {
+            const files = e.target.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        }
+
+        function handleFile(file) {
+            currentFile = file;
+            originalFilename = file.name.replace(/\.(html|htm)$/i, '');
+            
+            // Check file extension
+            const validExtensions = ['.html', '.htm'];
+            const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+            
+            if (!validExtensions.includes(fileExtension)) {
+                showError('Invalid file type. Please upload an HTML (.html or .htm) file.');
+                return;
+            }
+
+            // Read file
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                validateAndParseHTML(e.target.result);
+            };
+            reader.readAsText(file);
+        }
+
+        function validateAndParseHTML(htmlContent) {
+            hideError();
+            hideSuccess();
+
+            try {
+                // Parse HTML
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(htmlContent, 'text/html');
+
+                // Check for parsing errors
+                const parserError = doc.querySelector('parsererror');
+                if (parserError) {
+                    showError('Failed to parse HTML file. The file may be corrupted or invalid.');
+                    return;
+                }
+
+                // Find table
+                const table = doc.querySelector('table');
+                if (!table) {
+                    showError('No table found in the HTML file.');
+                    return;
+                }
+
+                // Get all rows (excluding thead if present)
+                const tbody = table.querySelector('tbody');
+                const rows = tbody ? Array.from(tbody.querySelectorAll('tr')) : Array.from(table.querySelectorAll('tr')).slice(1);
+                
+                // If no tbody, check if first row is a header
+                const allRows = Array.from(table.querySelectorAll('tr'));
+                const hasTheadOrHeaderRow = table.querySelector('thead') || (allRows[0] && allRows[0].querySelector('th'));
+                const dataRows = hasTheadOrHeaderRow ? allRows.slice(1) : allRows;
+
+                if (dataRows.length === 0) {
+                    showError('No data rows found in the table.');
+                    return;
+                }
+
+                // Check 5th column for parentheses
+                let hasParentheses = false;
+                for (const row of dataRows) {
+                    const cells = row.querySelectorAll('td');
+                    if (cells.length >= 5) {
+                        const fifthColumnText = cells[4].textContent || '';
+                        if (fifthColumnText.includes('(') && fifthColumnText.includes(')')) {
+                            hasParentheses = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!hasParentheses) {
+                    showError('No parentheses found in the 5th column of any row.');
+                    return;
+                }
+
+                // Validation passed
+                parsedTable = { doc, table, dataRows };
+                analyzeParentheses();
+                
+                showSuccess('File validated successfully!');
+                updateStepIndicator(1, 'completed');
+                
+            } catch (error) {
+                showError('Error processing file: ' + error.message);
+            }
+        }
+
+        function analyzeParentheses() {
+            // Get first data row with 5th column
+            const firstRow = parsedTable.dataRows.find(row => {
+                const cells = row.querySelectorAll('td');
+                return cells.length >= 5;
+            });
+
+            if (!firstRow) {
+                showError('No valid data rows found.');
+                return;
+            }
+
+            const cells = firstRow.querySelectorAll('td');
+            const fifthColumnText = cells[4].textContent || '';
+            
+            // Count parentheses sets
+            const matches = fifthColumnText.match(/\([^)]*\)/g) || [];
+            parenthesesCount = matches.length;
+
+            if (parenthesesCount === 0) {
+                showError('No parentheses found in the first data row.');
+                return;
+            }
+
+            if (parenthesesCount === 1) {
+                // Auto-select and proceed
+                selectedParenthesesIndex = 0;
+                processData();
+            } else {
+                // Show selection phase
+                showPhase2();
+            }
+        }
+
+        function showPhase2() {
+            phase2.classList.remove('hidden');
+            updateStepIndicator(2, 'active');
+
+            // Populate dropdown
+            parenthesesSelect.innerHTML = '';
+            const options = ['First', 'Second', 'Third', 'Fourth', 'Fifth', 'Sixth', 'Seventh', 'Eighth', 'Ninth', 'Tenth'];
+            for (let i = 0; i < parenthesesCount; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = options[i] || `${i + 1}th`;
+                parenthesesSelect.appendChild(option);
+            }
+
+            updatePreview();
+        }
+
+        function updatePreview() {
+            selectedParenthesesIndex = parseInt(parenthesesSelect.value);
+            
+            // Get first row's 5th column
+            const firstRow = parsedTable.dataRows.find(row => {
+                const cells = row.querySelectorAll('td');
+                return cells.length >= 5;
+            });
+
+            if (firstRow) {
+                const cells = firstRow.querySelectorAll('td');
+                const fifthColumnText = cells[4].textContent || '';
+                const matches = fifthColumnText.match(/\([^)]*\)/g) || [];
+                
+                if (matches[selectedParenthesesIndex]) {
+                    const extracted = matches[selectedParenthesesIndex].slice(1, -1); // Remove parentheses
+                    previewText.textContent = extracted;
+                    preview.classList.remove('hidden');
+                } else {
+                    preview.classList.add('hidden');
+                }
+            }
+        }
+
+        function processData() {
+            // Process table data
+            const rows = [];
+            
+            for (const row of parsedTable.dataRows) {
+                const cells = row.querySelectorAll('td');
+                
+                // Skip rows without 5th column
+                if (cells.length < 5) continue;
+                
+                const fifthColumnText = cells[4].textContent || '';
+                
+                // Extract parentheses content
+                const matches = fifthColumnText.match(/\([^)]*\)/g) || [];
+                
+                // Skip if row doesn't have enough parentheses sets
+                if (matches.length <= selectedParenthesesIndex) continue;
+                
+                // Extract Source (content inside selected parentheses)
+                const source = matches[selectedParenthesesIndex].slice(1, -1).trim();
+                
+                // Extract Target (text before first parenthesis)
+                const firstParenIndex = fifthColumnText.indexOf('(');
+                const target = fifthColumnText.substring(0, firstParenIndex).trim();
+                
+                rows.push({ source, target });
+            }
+
+            if (rows.length === 0) {
+                showError('No valid rows found to process.');
+                return;
+            }
+
+            // Generate CSV
+            csvData = generateCSV(rows);
+            
+            // Show Phase 3
+            showPhase3(rows.length);
+        }
+
+        function generateCSV(rows) {
+            // CSV header
+            let csv = 'Source,Target\n';
+            
+            // CSV rows
+            for (const row of rows) {
+                // Escape fields if they contain commas, quotes, or newlines
+                const source = escapeCSVField(row.source);
+                const target = escapeCSVField(row.target);
+                csv += `${source},${target}\n`;
+            }
+            
+            return csv;
+        }
+
+        function escapeCSVField(field) {
+            // If field contains comma, quote, or newline, wrap in quotes and escape internal quotes
+            if (field.includes(',') || field.includes('"') || field.includes('\n')) {
+                return '"' + field.replace(/"/g, '""') + '"';
+            }
+            return field;
+        }
+
+        function showPhase3(rowsProcessed) {
+            phase2.classList.add('hidden');
+            phase3.classList.remove('hidden');
+            updateStepIndicator(2, 'completed');
+            updateStepIndicator(3, 'active');
+            
+            rowCount.textContent = `${rowsProcessed} rows extracted and ready for download.`;
+        }
+
+        function downloadCSV() {
+            // Create blob with UTF-8 BOM for Excel compatibility
+            const BOM = '\uFEFF';
+            const blob = new Blob([BOM + csvData], { type: 'text/csv;charset=utf-8;' });
+            
+            // Create download link
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `${originalFilename}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            updateStepIndicator(3, 'completed');
+        }
+
+        function resetApp() {
+            // Reset all state
+            currentFile = null;
+            parsedTable = null;
+            parenthesesCount = 0;
+            selectedParenthesesIndex = 0;
+            csvData = null;
+            originalFilename = '';
+            fileInput.value = '';
+            
+            // Hide all phases
+            phase2.classList.add('hidden');
+            phase3.classList.add('hidden');
+            
+            // Reset step indicators
+            updateStepIndicator(1, 'active');
+            updateStepIndicator(2, 'inactive');
+            updateStepIndicator(3, 'inactive');
+            line1.style.backgroundColor = '#d1d5db';
+            line2.style.backgroundColor = '#d1d5db';
+            
+            // Hide messages
+            hideError();
+            hideSuccess();
+        }
+
+        function updateStepIndicator(step, state) {
+            const indicator = document.getElementById(`step${step}-indicator`);
+            indicator.classList.remove('step-active', 'step-completed', 'step-inactive');
+            indicator.classList.add(`step-${state}`);
+            
+            // Update connecting lines
+            if (step === 1 && state === 'completed') {
+                line1.style.backgroundColor = '#10b981';
+            }
+            if (step === 2 && state === 'completed') {
+                line2.style.backgroundColor = '#10b981';
+            }
+            if (step === 2 && state === 'active') {
+                line1.style.backgroundColor = '#10b981';
+            }
+            if (step === 3 && state === 'active') {
+                line1.style.backgroundColor = '#10b981';
+                line2.style.backgroundColor = '#10b981';
+            }
+        }
+
+        function showError(message) {
+            errorText.textContent = message;
+            errorMessage.classList.remove('hidden');
+            hideSuccess();
+        }
+
+        function hideError() {
+            errorMessage.classList.add('hidden');
+        }
+
+        function showSuccess(message) {
+            successText.textContent = message;
+            successMessage.classList.remove('hidden');
+            hideError();
+        }
+
+        function hideSuccess() {
+            successMessage.classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
