@@ -3,12 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HTML Biblical Terms List to CSV Converter</title>
-        <!-- NOTE: The Tailwind CDN is convenient for development but
-            should NOT be used in production. See README.md for
-            instructions to build a production stylesheet. -->
-        <link rel="stylesheet" href="dist/styles.css">
-        <script src="https://cdn.tailwindcss.com"></script>
+    <title>HTML Biblical Terms List to CSS Converter</title>
+    <link rel="stylesheet" href="dist/styles.css">
     <style>
         .step-indicator {
             transition: all 0.3s ease;
@@ -297,37 +293,56 @@
         }
 
         function analyzeParentheses() {
-            // Get first data row with 5th column
+            console.log('analyzeParentheses called');
+            // Get first data row with 5th column that has parentheses
             const firstRow = parsedTable.dataRows.find(row => {
                 const cells = row.querySelectorAll('td');
-                return cells.length >= 5;
+                if (cells.length >= 5) {
+                    const text = cells[4].textContent || '';
+                    return text.includes('(') && text.includes(')');
+                }
+                return false;
             });
 
             if (!firstRow) {
-                showError('No valid data rows found.');
+                console.log('No valid data rows with parentheses found');
+                showError('No valid data rows with parentheses found.');
                 return;
             }
 
             const cells = firstRow.querySelectorAll('td');
+            console.log('Total cells:', cells.length);
+            console.log('All cell texts:');
+            cells.forEach((cell, idx) => {
+                console.log(`  Cell ${idx}:`, cell.textContent);
+            });
+            
             const fifthColumnText = cells[4].textContent || '';
+            console.log('Fifth column text (index 4):', fifthColumnText);
             
             // Count parentheses sets
             const matches = fifthColumnText.match(/\([^)]*\)/g) || [];
             parenthesesCount = matches.length;
+            console.log('Parentheses count:', parenthesesCount);
 
             if (parenthesesCount === 0) {
+                console.log('No parentheses found');
                 showError('No parentheses found in the first data row.');
                 return;
             }
 
             // Always show Phase 2 (for filename editing)
             selectedParenthesesIndex = 0;
+            console.log('Calling showPhase2');
             showPhase2();
         }
 
         function showPhase2() {
+            console.log('showPhase2 called');
             phase1.classList.add('hidden');
             phase2.classList.remove('hidden');
+            console.log('Phase1 hidden:', phase1.classList.contains('hidden'));
+            console.log('Phase2 hidden:', phase2.classList.contains('hidden'));
             updateStepIndicator(2, 'active');
 
             // Set default output filename
