@@ -61,9 +61,11 @@ Hebrew word,Target language equivalent
 - No internet connection required (after initial page load for Tailwind CSS)
 - No installation needed
 
-## Tailwind in Production
+## For Developers: Building the CSS
 
-The project currently uses the Tailwind CDN for quick development. The CDN is fine for local testing, but Tailwind's CDN is not recommended for production use. To build a production-ready stylesheet locally, install the Tailwind CLI and generate a minified CSS file used by the app (`dist/styles.css`). A minimal setup is provided in this repository.
+**End users don't need to install anything** - they just visit the GitHub Pages URL and use the tool directly in their browser.
+
+If you're modifying the HTML/CSS and need to rebuild the stylesheet:
 
 1. Install Node.js (if you don't already have it) and run:
 
@@ -71,17 +73,15 @@ The project currently uses the Tailwind CDN for quick development. The CDN is fi
 npm install
 ```
 
-2. Build the Tailwind stylesheet (this will create `dist/styles.css`):
+2. Build the Tailwind stylesheet:
 
 ```bash
 npm run build:css
 ```
 
-3. Open `index.html` in your browser. The page will load `dist/styles.css` in preference to the CDN.
+3. Commit the updated `dist/styles.css` file before deploying to GitHub Pages
 
-Notes:
-- You can modify the Tailwind `content` paths in `tailwind.config.cjs` if you add new HTML/JS files.
-- Running `npm run build:css` produces a production-ready, minified `dist/styles.css` suitable for deployment.
+The built `dist/styles.css` file is already included in this repository, so the tool works immediately when deployed to GitHub Pages.
 
 ## Use Case
 
